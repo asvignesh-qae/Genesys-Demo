@@ -16,7 +16,7 @@ import io.cucumber.java.en.When;
 public class HandleTabAndIFrameSteps {
 
     private static final Logger logger = LogManager.getLogger(HandleTabAndIFrameSteps.class);
-    private static final String EXPECTED_NEW_TAB_TITLE = "Selenium Liveō Project for Practice";
+    private static final String EXPECTED_NEW_TAB_TITLE = "Selenium Live Project for Practice";
 
     private Guru99HomePage guru99HomePage;
 
