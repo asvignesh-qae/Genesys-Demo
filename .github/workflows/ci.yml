@@ -33,6 +33,20 @@ jobs:
       - name: Run TestNG tests (headless)
         run: mvn clean test -Dheadless=true -DsuiteXmlFile=src/test/resources/testng-chrome.xml
 
+      - name: Generate Allure HTML report
+        if: always()
+        run: |
+          mvn allure:report -q
+          echo "Allure HTML report generated at target/site/allure-maven-plugin/"
+
+      - name: Upload Allure HTML report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: allure-report-testng
+          path: target/site/allure-maven-plugin/
+          retention-days: 30
+
       - name: Upload Allure results
         if: always()
         uses: actions/upload-artifact@v4
@@ -49,8 +63,8 @@ jobs:
           path: target/screenshots/
           retention-days: 30
 
-  cucumber-tests-edge:
-    name: Cucumber BDD Tests (Edge)
+  cucumber-tests-chrome:
+    name: Cucumber BDD Tests (Chrome)
     runs-on: ubuntu-latest
 
     steps:
@@ -64,19 +78,33 @@ jobs:
           distribution: 'temurin'
           cache: maven
 
-      - name: Set up Edge
-        uses: browser-actions/setup-edge@v1
+      - name: Set up Chrome
+        uses: browser-actions/setup-chrome@v1
         with:
-          edge-version: stable
+          chrome-version: stable
 
-      - name: Run Cucumber tests on Edge (headless)
-        run: mvn clean test -Dbrowser=edge -Dheadless=true -Dtest=com.vignesh.runners.CucumberTestRunner
+      - name: Run Cucumber tests on Chrome (headless)
+        run: mvn clean test -Dbrowser=chrome -Dheadless=true -Dtest=com.vignesh.runners.CucumberTestRunner
+
+      - name: Generate Allure HTML report
+        if: always()
+        run: |
+          mvn allure:report -q
+          echo "Allure HTML report generated at target/site/allure-maven-plugin/"
+
+      - name: Upload Allure HTML report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: allure-report-cucumber-chrome
+          path: target/site/allure-maven-plugin/
+          retention-days: 30
 
       - name: Upload Allure results
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: allure-results-cucumber-edge
+          name: allure-results-cucumber-chrome
           path: target/allure-results/
           retention-days: 30
 
@@ -84,7 +112,7 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: cucumber-reports-edge
+          name: cucumber-reports-chrome
           path: target/cucumber-reports/
           retention-days: 30
 
@@ -92,6 +120,6 @@ jobs:
         if: failure()
         uses: actions/upload-artifact@v4
         with:
-          name: screenshots-cucumber-edge
+          name: screenshots-cucumber-chrome
           path: target/screenshots/
           retention-days: 30
