@@ -447,16 +447,33 @@ mvn allure:serve
 
 ## CI/CD - GitHub Actions
 
-Tests run automatically on every push and pull request to `main`/`master` via GitHub Actions.
+Tests run automatically on every push and pull request to `main`/`master` via GitHub Actions. The workflow also runs on a schedule (every 8 hours) and can be triggered manually.
 
 ### Workflow Overview
 
 The workflow (`.github/workflows/ci.yml`) runs two parallel jobs:
 
-| Job | Suite | Description |
-|---|---|---|
-| `testng-tests` | `testng-chrome.xml` | All TestNG tests in headless Chrome |
-| `cucumber-tests` | `CucumberTestRunner` | All Cucumber BDD scenarios in headless Chrome |
+| Job | Browser | Suite | Description |
+|---|---|---|---|
+| `testng-tests` | Chrome | `testng-chrome.xml` | All TestNG tests in headless Chrome |
+| `cucumber-tests-chrome` | Chrome | `CucumberTestRunner` | All Cucumber BDD scenarios in headless Chrome |
+
+### Allure Report Generation
+
+Each job generates a self-contained Allure HTML report using the `--single-file` flag:
+
+1. **Install Allure CLI** -- Installed via `npm install -g allure-commandline`
+2. **Generate report** -- `allure generate target/allure-results --single-file --clean -o target/allure-report`
+3. **Upload artifact** -- The report is uploaded as a GitHub Actions artifact
+
+The `--single-file` flag embeds all CSS, JS, and data directly into a single `index.html` file, so you can open it directly in a browser without needing a local server.
+
+### Viewing the Allure Report
+
+1. Go to the workflow run in the GitHub **Actions** tab
+2. Scroll to the **Artifacts** section at the bottom
+3. Download `allure-report-testng` or `allure-report-cucumber-chrome`
+4. Unzip and open `index.html` directly in your browser
 
 ### Artifacts
 
@@ -464,16 +481,21 @@ After each run, the following artifacts are uploaded:
 
 | Artifact | Condition | Contents |
 |---|---|---|
-| `allure-results-testng` | Always | Allure results from TestNG tests |
-| `allure-results-cucumber` | Always | Allure results from Cucumber tests |
-| `cucumber-reports` | Always | Cucumber HTML/JSON reports |
-| `screenshots-*` | On failure | Failure screenshots |
+| `allure-report-testng` | Always | Self-contained Allure HTML report (TestNG) |
+| `allure-report-cucumber-chrome` | Always | Self-contained Allure HTML report (Cucumber) |
+| `allure-results-testng` | Always | Raw Allure results (TestNG) |
+| `allure-results-cucumber-chrome` | Always | Raw Allure results (Cucumber) |
+| `cucumber-reports-chrome` | Always | Cucumber HTML/JSON reports |
+| `screenshots-testng` | On failure | TestNG failure screenshots |
+| `screenshots-cucumber-chrome` | On failure | Cucumber failure screenshots |
 
 ### Manual Trigger
 
 You can also trigger the workflow manually from the **Actions** tab using `workflow_dispatch`.
 
 ## Reports
+
+### Local Reports
 
 After test execution, reports are generated at:
 
@@ -484,6 +506,25 @@ After test execution, reports are generated at:
 | Cucumber JSON | `target/cucumber-reports/cucumber.json` |
 | TestNG Default | `target/surefire-reports/index.html` |
 | Screenshots | `target/screenshots/` |
+
+### Viewing Allure Reports Locally
+
+```bash
+# Option 1: Generate and open report in browser (requires Allure CLI)
+allure serve target/allure-results
+
+# Option 2: Generate via Maven plugin, then serve with a local server
+mvn allure:serve
+
+# Option 3: Generate a single-file report that opens directly
+allure generate target/allure-results --single-file --clean -o target/allure-report
+# Then open target/allure-report/index.html in your browser
+```
+
+To install Allure CLI locally:
+- **npm**: `npm install -g allure-commandline`
+- **Homebrew** (macOS): `brew install allure`
+- **Scoop** (Windows): `scoop install allure`
 
 ## Configuration
 
