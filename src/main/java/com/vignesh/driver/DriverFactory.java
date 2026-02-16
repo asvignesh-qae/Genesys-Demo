@@ -3,6 +3,7 @@ package com.vignesh.driver;
 import com.vignesh.config.ConfigReader;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.openqa.selenium.PageLoadStrategy;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.chrome.ChromeDriver;
 import org.openqa.selenium.chrome.ChromeOptions;
@@ -47,6 +48,8 @@ public final class DriverFactory {
                 options.addArguments("--disable-notifications");
                 options.addArguments("--no-sandbox");
                 options.addArguments("--disable-dev-shm-usage");
+                options.addArguments("--disable-gpu");
+                options.setPageLoadStrategy(PageLoadStrategy.EAGER);
                 options.setExperimentalOption("prefs", java.util.Map.of(
                         "credentials_enable_service", false,
                         "profile.password_manager_enabled", false,
@@ -70,6 +73,11 @@ public final class DriverFactory {
             
             case "edge" -> {
                 EdgeOptions options = new EdgeOptions();
+                options.addArguments("--disable-notifications");
+                options.addArguments("--no-sandbox");
+                options.addArguments("--disable-dev-shm-usage");
+                options.addArguments("--disable-gpu");
+                options.setPageLoadStrategy(PageLoadStrategy.EAGER);
                 if (headless) {
                     options.addArguments("--headless=new");
                 }
