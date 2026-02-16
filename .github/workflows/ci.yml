@@ -35,11 +35,7 @@ jobs:
 
       - name: Install Allure CLI
         if: always()
-        run: |
-          ALLURE_VERSION=$(curl -s https://api.github.com/repos/allure-framework/allure2/releases/latest | grep '"tag_name"' | sed 's/.*"tag_name": "//;s/".*//')
-          curl -sL "https://github.com/allure-framework/allure2/releases/download/${ALLURE_VERSION}/allure-${ALLURE_VERSION}.zip" -o allure.zip
-          unzip -q allure.zip
-          echo "$PWD/allure-${ALLURE_VERSION}/bin" >> $GITHUB_PATH
+        run: npm install -g allure-commandline
 
       - name: Generate Allure single-file report
         if: always()
@@ -92,18 +88,20 @@ jobs:
       - name: Run Cucumber tests on Chrome (headless)
         run: mvn clean test -Dbrowser=chrome -Dheadless=true -Dtest=com.vignesh.runners.CucumberTestRunner
 
-      - name: Generate Allure HTML report
+      - name: Install Allure CLI
         if: always()
-        run: |
-          mvn allure:report -q
-          echo "Allure HTML report generated at target/site/allure-maven-plugin/"
+        run: npm install -g allure-commandline
+
+      - name: Generate Allure single-file report
+        if: always()
+        run: allure generate target/allure-results --single-file --clean -o target/allure-report
 
       - name: Upload Allure HTML report
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: allure-report-cucumber-chrome
-          path: target/site/allure-maven-plugin/
+          path: target/allure-report/
           retention-days: 30
 
       - name: Upload Allure results
