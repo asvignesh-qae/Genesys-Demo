@@ -1,6 +1,22 @@
-# Hybrid Test Automation Framework
+# Hybrid Test Automation Framework (Selenium + TestNG + Cucumber + REST Assured) with Java 17
+
+![CI](https://github.com/asvignesh-qae/Genesys-Demo/actions/workflows/ci.yml/badge.svg)
 
 A Selenium-based Hybrid Test Automation Framework built with Java 17, combining Page Object Model (POM), Data-Driven Testing, and BDD (Cucumber) approaches.
+
+## Getting Started
+
+```bash
+# Clone the repository
+git clone https://github.com/asvignesh-qae/Genesys-Demo.git
+cd Genesys-Demo
+
+# Run all tests with default settings (Chrome browser)
+mvn clean test
+
+# Run in headless mode
+mvn clean test -Dheadless=true
+```
 
 ## Tech Stack
 
@@ -16,6 +32,10 @@ A Selenium-based Hybrid Test Automation Framework built with Java 17, combining 
 | Maven | 3.x | Build and dependency management |
 | Gson | 2.11.0 | JSON data parsing |
 | Lombok | 1.18.40 | Boilerplate reduction for data models |
+| OkHttp | 5.1.0 | HTTP client library |
+| Apache HttpClient5 | 5.6 | HTTP client library |
+| Commons IO | 2.21.0 | File I/O utilities |
+| AspectJ | 1.9.22.1 | Allure weaving with Surefire plugin |
 
 ## Architecture Diagram
 
@@ -355,6 +375,26 @@ Feature: Login Functionality
 - Java 17+
 - Maven 3.8+
 - Chrome / Firefox / Edge browser installed
+
+### Interactive Test Runner (run-tests.sh)
+
+The project includes an interactive shell script that provides a menu-driven interface for running tests:
+
+```bash
+# Make the script executable (first time only)
+chmod +x run-tests.sh
+
+# Run the interactive menu
+./run-tests.sh
+```
+
+The menu lets you:
+- Run TestNG suites (Chrome, Firefox, Edge, Smoke, Regression)
+- Run individual TestNG test classes
+- Run Cucumber BDD scenarios by tag (`@testCase1` through `@testCase5`, `@smoke`)
+- Change browser, toggle headless mode, and set retry count on the fly
+- Generate and open Allure reports
+- Every option is run locally with real browsers, and results are saved in the `target/` directory
 
 ### Run All Tests (Default TestNG Suite)
 
