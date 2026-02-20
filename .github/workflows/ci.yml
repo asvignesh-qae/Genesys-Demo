@@ -39,10 +39,6 @@ jobs:
         run: mvn test -Dsurefire.suiteXmlFiles=testng.xml -Dheadless=true
         continue-on-error: true
 
-      - name: Generate Allure report
-        run: mvn allure:report
-        continue-on-error: true
-
       - name: Upload TestNG Allure results
         uses: actions/upload-artifact@v4
         if: always()
@@ -80,7 +76,7 @@ jobs:
           retention-days: 1
 
   deploy-report:
-    name: Generate & Deploy Allure Report to GitHub Pages
+    name: Generate & Deploy Allure Reports to GitHub Pages
     needs: [testng-tests, cucumber-tests]
     if: always()
     runs-on: ubuntu-latest
@@ -91,35 +87,85 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Download TestNG results
+      # ── TestNG Report ──────────────────────────────────────────────
+      - name: Download TestNG Allure results
         uses: actions/download-artifact@v4
         with:
           name: allure-results-testng
-          path: allure-results/
+          path: allure-results-testng/
         continue-on-error: true
 
-      - name: Download Cucumber results
+      - name: Generate TestNG Allure report
+        uses: simple-elf/allure-report-action@master
+        with:
+          allure_results: allure-results-testng
+          allure_report: site/testng
+          keep_reports: 20
+
+      # ── Cucumber Report ────────────────────────────────────────────
+      - name: Download Cucumber Allure results
         uses: actions/download-artifact@v4
         with:
           name: allure-results-cucumber
-          path: allure-results/
+          path: allure-results-cucumber/
         continue-on-error: true
 
-      - name: Generate Allure report
+      - name: Generate Cucumber Allure report
         uses: simple-elf/allure-report-action@master
         with:
-          allure_results: allure-results
-          allure_report: allure-report
-          allure_history: allure-history
+          allure_results: allure-results-cucumber
+          allure_report: site/cucumber
           keep_reports: 20
 
+      # ── Index page linking both reports ────────────────────────────
+      - name: Create index page
+        run: |
+          cat > site/index.html << 'EOF'
+          <!DOCTYPE html>
+          <html lang="en">
+          <head>
+            <meta charset="UTF-8" />
+            <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+            <title>Test Reports – Genesys-Demo</title>
+            <style>
+              body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #0d1117; color: #e6edf3; display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; margin: 0; gap: 24px; }
+              h1 { font-size: 1.5rem; color: #58a6ff; margin: 0; }
+              p { color: #8b949e; margin: 0; font-size: 0.9rem; }
+              .cards { display: flex; gap: 16px; flex-wrap: wrap; justify-content: center; }
+              a.card { display: flex; flex-direction: column; gap: 8px; padding: 24px 32px; border: 1px solid #30363d; border-radius: 12px; background: #161b22; color: #e6edf3; text-decoration: none; transition: border-color .2s, background .2s; min-width: 200px; text-align: center; }
+              a.card:hover { border-color: #58a6ff; background: #1c2128; }
+              a.card .icon { font-size: 2rem; }
+              a.card .label { font-weight: 600; font-size: 1rem; }
+              a.card .sub { font-size: 0.8rem; color: #8b949e; }
+            </style>
+          </head>
+          <body>
+            <h1>Genesys-Demo — Test Reports</h1>
+            <p>Hybrid Test Automation Framework (Selenium + TestNG + Cucumber)</p>
+            <div class="cards">
+              <a class="card" href="./testng/">
+                <span class="icon">📊</span>
+                <span class="label">Allure TestNG Report</span>
+                <span class="sub">Unit &amp; integration tests</span>
+              </a>
+              <a class="card" href="./cucumber/">
+                <span class="icon">🥒</span>
+                <span class="label">Allure Cucumber Report</span>
+                <span class="sub">BDD scenarios</span>
+              </a>
+            </div>
+          </body>
+          </html>
+          EOF
+
+      # ── Deploy to GitHub Pages ─────────────────────────────────────
       - name: Setup GitHub Pages
         uses: actions/configure-pages@v5
 
-      - name: Upload Allure report to Pages
+      - name: Upload site to Pages
         uses: actions/upload-pages-artifact@v3
         with:
-          path: allure-report/
+          path: site/
 
       - name: Deploy to GitHub Pages
         id: deployment
