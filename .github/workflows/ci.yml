@@ -39,6 +39,10 @@ jobs:
         run: mvn test -Dsurefire.suiteXmlFiles=testng.xml -Dheadless=true
         continue-on-error: true
 
+      - name: Ensure allure-results directory exists
+        if: always()
+        run: mkdir -p target/allure-results
+
       - name: Upload TestNG Allure results
         uses: actions/upload-artifact@v4
         if: always()
@@ -46,6 +50,7 @@ jobs:
           name: allure-results-testng
           path: target/allure-results/
           retention-days: 1
+          if-no-files-found: warn
 
   cucumber-tests:
     name: Cucumber BDD Tests (Chrome)
@@ -67,6 +72,10 @@ jobs:
         run: mvn test -Dcucumber=true -Dheadless=true
         continue-on-error: true
 
+      - name: Ensure allure-results directory exists
+        if: always()
+        run: mkdir -p target/allure-results
+
       - name: Upload Cucumber Allure results
         uses: actions/upload-artifact@v4
         if: always()
@@ -74,6 +83,7 @@ jobs:
           name: allure-results-cucumber
           path: target/allure-results/
           retention-days: 1
+          if-no-files-found: warn
 
   deploy-report:
     name: Generate & Deploy Allure Reports to GitHub Pages
@@ -97,6 +107,7 @@ jobs:
 
       - name: Generate TestNG Allure report
         uses: simple-elf/allure-report-action@master
+        continue-on-error: true
         with:
           allure_results: allure-results-testng
           allure_report: site/testng
@@ -112,12 +123,16 @@ jobs:
 
       - name: Generate Cucumber Allure report
         uses: simple-elf/allure-report-action@master
+        continue-on-error: true
         with:
           allure_results: allure-results-cucumber
           allure_report: site/cucumber
           keep_reports: 20
 
       # ── Index page linking both reports ────────────────────────────
+      - name: Create site directory
+        run: mkdir -p site
+
       - name: Create index page
         run: |
           cat > site/index.html << 'EOF'
