@@ -97,6 +97,9 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Create site directory
+        run: mkdir -p site/testng site/cucumber
+
       # ── TestNG Report ──────────────────────────────────────────────
       - name: Download TestNG Allure results
         uses: actions/download-artifact@v4
@@ -130,9 +133,6 @@ jobs:
           keep_reports: 20
 
       # ── Index page linking both reports ────────────────────────────
-      - name: Create site directory
-        run: mkdir -p site
-
       - name: Create index page
         run: |
           cat > site/index.html << 'EOF'
