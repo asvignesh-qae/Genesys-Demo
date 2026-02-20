@@ -77,7 +77,7 @@ jobs:
         uses: browser-actions/setup-chrome@v1
 
       - name: Run Cucumber tests
-        run: mvn test -Dcucumber=true -Dheadless=true
+        run: mvn test -DsuiteXmlFile=src/test/resources/testng-cucumber.xml -Dheadless=true
         continue-on-error: true
 
       - name: Ensure allure-results directory exists
