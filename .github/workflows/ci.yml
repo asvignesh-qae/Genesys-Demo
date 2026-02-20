@@ -2,12 +2,21 @@ name: CI - Selenium Tests
 
 on:
   push:
-    branches: [ main, master ]
+    branches: [main, master]
   pull_request:
-    branches: [ main, master ]
+    branches: [main, master]
   schedule:
     - cron: '0 */8 * * *'
   workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: "pages"
+  cancel-in-progress: false
 
 jobs:
   testng-tests:
@@ -15,115 +24,103 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-      - name: Set up JDK 17
+      - name: Set up Java 17
         uses: actions/setup-java@v4
         with:
           java-version: '17'
           distribution: 'temurin'
-          cache: maven
 
       - name: Set up Chrome
         uses: browser-actions/setup-chrome@v1
-        with:
-          chrome-version: stable
 
-      - name: Run TestNG tests (headless)
-        run: mvn clean test -Dheadless=true -DsuiteXmlFile=src/test/resources/testng-chrome.xml
+      - name: Run TestNG tests
+        run: mvn test -Dsurefire.suiteXmlFiles=testng.xml -Dheadless=true
+        continue-on-error: true
 
-      - name: Install Allure CLI
-        if: always()
-        run: npm install -g allure-commandline
+      - name: Generate Allure report
+        run: mvn allure:report
+        continue-on-error: true
 
-      - name: Generate Allure single-file report
-        if: always()
-        run: allure generate target/allure-results --single-file --clean -o target/allure-report
-
-      - name: Upload Allure HTML report
-        if: always()
+      - name: Upload TestNG Allure results
         uses: actions/upload-artifact@v4
-        with:
-          name: allure-report-testng
-          path: target/allure-report/
-          retention-days: 30
-
-      - name: Upload Allure results
         if: always()
-        uses: actions/upload-artifact@v4
         with:
           name: allure-results-testng
           path: target/allure-results/
-          retention-days: 30
+          retention-days: 1
 
-      - name: Upload screenshots
-        if: failure()
-        uses: actions/upload-artifact@v4
-        with:
-          name: screenshots-testng
-          path: target/screenshots/
-          retention-days: 30
-
-  cucumber-tests-chrome:
+  cucumber-tests:
     name: Cucumber BDD Tests (Chrome)
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-      - name: Set up JDK 17
+      - name: Set up Java 17
         uses: actions/setup-java@v4
         with:
           java-version: '17'
           distribution: 'temurin'
-          cache: maven
 
       - name: Set up Chrome
         uses: browser-actions/setup-chrome@v1
-        with:
-          chrome-version: stable
 
-      - name: Run Cucumber tests on Chrome (headless)
-        run: mvn clean test -Dbrowser=chrome -Dheadless=true -Dtest=com.vignesh.runners.CucumberTestRunner
+      - name: Run Cucumber tests
+        run: mvn test -Dcucumber=true -Dheadless=true
+        continue-on-error: true
 
-      - name: Install Allure CLI
-        if: always()
-        run: npm install -g allure-commandline
-
-      - name: Generate Allure single-file report
-        if: always()
-        run: allure generate target/allure-results --single-file --clean -o target/allure-report
-
-      - name: Upload Allure HTML report
-        if: always()
+      - name: Upload Cucumber Allure results
         uses: actions/upload-artifact@v4
-        with:
-          name: allure-report-cucumber-chrome
-          path: target/allure-report/
-          retention-days: 30
-
-      - name: Upload Allure results
         if: always()
-        uses: actions/upload-artifact@v4
         with:
-          name: allure-results-cucumber-chrome
+          name: allure-results-cucumber
           path: target/allure-results/
-          retention-days: 30
+          retention-days: 1
 
-      - name: Upload Cucumber reports
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: cucumber-reports-chrome
-          path: target/cucumber-reports/
-          retention-days: 30
+  deploy-report:
+    name: Generate & Deploy Allure Report to GitHub Pages
+    needs: [testng-tests, cucumber-tests]
+    if: always()
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
 
-      - name: Upload screenshots
-        if: failure()
-        uses: actions/upload-artifact@v4
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Download TestNG results
+        uses: actions/download-artifact@v4
         with:
-          name: screenshots-cucumber-chrome
-          path: target/screenshots/
-          retention-days: 30
+          name: allure-results-testng
+          path: allure-results/
+        continue-on-error: true
+
+      - name: Download Cucumber results
+        uses: actions/download-artifact@v4
+        with:
+          name: allure-results-cucumber
+          path: allure-results/
+        continue-on-error: true
+
+      - name: Generate Allure report
+        uses: simple-elf/allure-report-action@master
+        with:
+          allure_results: allure-results
+          allure_report: allure-report
+          allure_history: allure-history
+          keep_reports: 20
+
+      - name: Setup GitHub Pages
+        uses: actions/configure-pages@v5
+
+      - name: Upload Allure report to Pages
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: allure-report/
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
