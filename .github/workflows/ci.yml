@@ -36,7 +36,7 @@ jobs:
         uses: browser-actions/setup-chrome@v1
 
       - name: Run TestNG tests
-        run: mvn test -Dsurefire.suiteXmlFiles=testng.xml -Dheadless=true
+        run: mvn test -DsuiteXmlFile=src/test/resources/testng-chrome.xml -Dheadless=true
         continue-on-error: true
 
       - name: Ensure allure-results directory exists
